@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth");
 const User = require("../models/User");
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = "surge-jwt-secret";
 
 /**
  * @route   POST /users
@@ -72,9 +72,9 @@ router.post("/login", async (req, res) => {
   try {
     // Check for existing user
     const user = await User.findOne({
-      username: username_email,
       email: username_email,
     });
+
     if (!user) throw Error("User does not exist");
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -96,6 +96,21 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     res.status(400).json({ msg: err.message });
+  }
+});
+
+/**
+ * @route   GET api/auth/user
+ * @desc    Get user data
+ * @access  Private
+ */
+router.post("/profile", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) throw Error("User does not exist");
+    res.json(user);
+  } catch (e) {
+    res.status(400).json({ msg: e.message });
   }
 });
 
