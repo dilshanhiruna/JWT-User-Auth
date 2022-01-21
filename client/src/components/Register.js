@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import checkUser from "./auth/auth";
+import Swal from "sweetalert2";
 import Axios from "axios";
 
 const Register = () => {
@@ -11,10 +13,51 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [comfirmPassword, setComfirmPassword] = useState("");
 
+  const [error, seterror] = useState("");
+
+  useEffect(() => {
+    //check whether user is already logged in or not
+    const user = checkUser();
+    if (user) {
+      Axios.post("http://localhost:5000/api/user/profile", user, {
+        headers: { "x-auth-token": localStorage.getItem("token") },
+      }).then((res) => {
+        navigate("/profile");
+      });
+    }
+  }, []);
+
+  function ValidateEmail(mail) {
+    if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)) {
+      return true;
+    }
+    return false;
+  }
+
   const UserRegister = (e) => {
     e.preventDefault();
+    seterror("");
+
+    if (
+      fullname === "" ||
+      email === "" ||
+      username === "" ||
+      password === "" ||
+      comfirmPassword === ""
+    ) {
+      seterror("Please fill all the fields");
+      return;
+    }
+    if (!ValidateEmail(email)) {
+      seterror("Invalid email");
+      return;
+    }
+    if (password.length < 5) {
+      seterror("Password must be atleast 5 characters long");
+      return;
+    }
     if (password !== comfirmPassword) {
-      alert("Password not match");
+      seterror("Password not match");
       return;
     }
     // Headers
@@ -28,7 +71,13 @@ const Register = () => {
 
     Axios.post("http://localhost:5000/api/user/register", payload, config)
       .then((res) => {
-        console.log(res.data);
+        Swal.fire({
+          position: "top-end",
+          icon: "success",
+          title: "User Created Successfully",
+          showConfirmButton: false,
+          timer: 1500,
+        });
         localStorage.setItem("token", res.data.token);
         navigate("/profile");
       })
@@ -42,6 +91,14 @@ const Register = () => {
       <h1 className="text-center mb-4">Register</h1>
       <div style={{ margin: "" }} className="d-flex justify-content-center">
         <form style={{ width: "300px" }}>
+          <div
+            class="alert alert-danger text-center"
+            role="alert"
+            hidden={!error}
+            style={{ fontSize: "12px", height: "30px", padding: "5px" }}
+          >
+            {error}
+          </div>
           <div class="form-floating mb-3">
             <input
               value={fullname}
@@ -108,6 +165,13 @@ const Register = () => {
           >
             Sign in
           </button>
+          <p
+            className="text-end mt-2 text-secondary"
+            style={{ cursor: "pointer" }}
+            onClick={() => navigate("/login")}
+          >
+            Already registered?
+          </p>
         </form>
       </div>
     </>

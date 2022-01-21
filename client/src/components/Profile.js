@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import checkUser from "./auth/auth";
+import Swal from "sweetalert2";
 import Axios from "axios";
 
 const Profile = () => {
@@ -14,10 +15,19 @@ const Profile = () => {
 
   const [changePassword, setchangePassword] = useState(false);
 
+  const [error, seterror] = useState("");
+
   // Headers
   const config = {
     headers: { "x-auth-token": localStorage.getItem("token") },
   };
+
+  function ValidateEmail(mail) {
+    if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)) {
+      return true;
+    }
+    return false;
+  }
 
   useEffect(() => {
     //check whether user is logged in or not (if not send back to the login page)
@@ -45,36 +55,66 @@ const Profile = () => {
 
     //update user details only (expect password)
     if (!changePassword) {
+      if (fullname === "" || email === "" || username === "") {
+        seterror("Please fill all the fields");
+        return;
+      }
+      if (!ValidateEmail(email)) {
+        seterror("Invalid email");
+        return;
+      }
       // Request body
       const body = { fullname, email, username };
 
       Axios.put("http://localhost:5000/api/user/change-details", body, config)
         .then((res) => {
+          seterror("");
           navigate("/profile");
-          console.log(res);
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: res.data.status,
+            showConfirmButton: false,
+            timer: 1500,
+          });
         })
         .catch((err) => {
           console.log(err.response.data);
         });
     } else {
       //update password only
-      if (password === comfirmPassword) {
-        // Request body
-        const body = { password };
-
-        Axios.put(
-          "http://localhost:5000/api/user/change-password",
-          body,
-          config
-        )
-          .then((res) => {
-            navigate("/profile");
-            console.log(res);
-          })
-          .catch((err) => {
-            console.log(err.response.data);
-          });
+      if (password === "" || comfirmPassword === "") {
+        seterror("Please fill all the fields");
+        return;
       }
+      if (password.length < 5) {
+        seterror("Password must be atleast 5 characters long");
+        return;
+      }
+      if (password !== comfirmPassword) {
+        seterror("Password not match");
+        return;
+      }
+
+      // Request body
+      const body = { password };
+
+      Axios.put("http://localhost:5000/api/user/change-password", body, config)
+        .then((res) => {
+          seterror("");
+          setchangePassword(false);
+          navigate("/profile");
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: res.data.status,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        })
+        .catch((err) => {
+          console.log(err.response.data);
+        });
     }
   };
 
@@ -95,6 +135,14 @@ const Profile = () => {
 
       <div style={{ margin: "" }} className="d-flex justify-content-center">
         <form style={{ width: "300px" }}>
+          <div
+            class="alert alert-danger text-center"
+            role="alert"
+            hidden={!error}
+            style={{ fontSize: "12px", height: "30px", padding: "5px" }}
+          >
+            {error}
+          </div>
           <div hidden={changePassword}>
             <div class="form-floating mb-3">
               <input
