@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  server:
+    build: ./server
+    container_name: node-server
+    command: /usr/src/app/node_modules/.bin/nodemon server.js
+    volumes:
+      - ./server/:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+    env_file: ./server/.env
+    environment:
+      - NODE_ENV=development
+      - MONGO_URL=mongodb+srv://<user>:<password>@cluster0.xjbcs.mongodb.net/jwt-user-auth?retryWrites=true&w=majority
+      - JWT_SECRET=<secret>
+    networks:
+      - app-network
+  db:
+    image: mongo:3.6.19-xenial
+    ports:
+      - 27017:27017
+    networks:
+      - mern-network
+    volumes:
+      - mongo-data:/data/db
+  client:
+    build: ./client
+    container_name: react-client
+    command: npm start
+    volumes:
+      - ./client/src:/usr/app/src
+      - ./client/public:/usr/app/public
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+networks:
+  mern-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local

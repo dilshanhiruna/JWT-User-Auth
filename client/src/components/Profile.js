@@ -22,6 +22,7 @@ const Profile = () => {
     headers: { "x-auth-token": localStorage.getItem("token") },
   };
 
+  //validate email
   function ValidateEmail(mail) {
     if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)) {
       return true;

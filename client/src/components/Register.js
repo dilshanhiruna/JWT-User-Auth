@@ -27,6 +27,7 @@ const Register = () => {
     }
   }, []);
 
+  //validate email
   function ValidateEmail(mail) {
     if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)) {
       return true;
@@ -34,10 +35,12 @@ const Register = () => {
     return false;
   }
 
+  //register user
   const UserRegister = (e) => {
     e.preventDefault();
     seterror("");
 
+    //validations
     if (
       fullname === "" ||
       email === "" ||
@@ -78,6 +81,7 @@ const Register = () => {
           showConfirmButton: false,
           timer: 1500,
         });
+        //save token in local storge
         localStorage.setItem("token", res.data.token);
         navigate("/profile");
       })

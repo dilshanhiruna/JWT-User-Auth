@@ -23,13 +23,7 @@ const Login = () => {
     }
   }, []);
 
-  function ValidateEmail(mail) {
-    if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)) {
-      return true;
-    }
-    return false;
-  }
-
+  //user login function
   const UserLogin = (e) => {
     e.preventDefault();
 
@@ -49,6 +43,7 @@ const Login = () => {
 
     Axios.post("http://localhost:5000/api/user/login", payload, config)
       .then((res) => {
+        //save token to local storage
         localStorage.setItem("token", res.data.token);
         navigate("/profile");
       })
