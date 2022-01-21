@@ -7,7 +7,7 @@ import Login from "./components/Login";
 
 function App() {
   return (
-    <div className="container" style={{ margin: "100px" }}>
+    <div className="container" style={{ margin: "auto", marginTop: "200px" }}>
       <Router>
         <Routes>
           <Route path="/login" exact element={<Login />} />
