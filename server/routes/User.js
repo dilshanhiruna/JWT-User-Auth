@@ -72,7 +72,14 @@ router.post("/login", async (req, res) => {
   try {
     // Check for existing user
     const user = await User.findOne({
-      email: username_email,
+      $or: [
+        {
+          email: username_email,
+        },
+        {
+          username: username_email,
+        },
+      ],
     });
 
     if (!user) throw Error("User does not exist");
@@ -100,8 +107,8 @@ router.post("/login", async (req, res) => {
 });
 
 /**
- * @route   GET api/auth/user
- * @desc    Get user data
+ * @route   GET api/user/profile
+ * @desc    POST user data
  * @access  Private
  */
 router.post("/profile", auth, async (req, res) => {
@@ -111,6 +118,58 @@ router.post("/profile", auth, async (req, res) => {
     res.json(user);
   } catch (e) {
     res.status(400).json({ msg: e.message });
+  }
+});
+
+/**
+ * @route   GET api/user/change-details
+ * @desc    PUT change user details
+ * @access  Private
+ */
+router.put("/change-details", auth, async (req, res) => {
+  //destructure data
+  const { fullname, email, username } = req.body;
+
+  const newUserData = {
+    fullname,
+    email,
+    username,
+  };
+
+  User.findByIdAndUpdate(req.user.id, newUserData, function (err, response) {
+    // Handle any possible errors
+    if (err) {
+      res.status(400).json({ msg: err.message });
+    } else {
+      res.status(200).json({ status: "User updated" });
+    }
+  });
+});
+router.put("/change-password", auth, async (req, res) => {
+  //destructure data
+  const { password } = req.body;
+
+  if (!password && password.length < 4) {
+    return res.status(400).json({ msg: "Invalid password" });
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    if (!salt) throw Error("Something went wrong with bcrypt");
+
+    const hash = await bcrypt.hash(password, salt);
+    if (!hash) throw Error("Something went wrong hashing the password");
+
+    const user_id = req.user.id;
+
+    await User.updateOne(
+      { user_id },
+      {
+        $set: { password: hash },
+      }
+    );
+    res.json({ status: "password update successfully" });
+  } catch (err) {
+    res.status(400).json({ msg: err.message });
   }
 });
 

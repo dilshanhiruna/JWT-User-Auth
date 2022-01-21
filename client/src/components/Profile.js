@@ -4,7 +4,6 @@ import checkUser from "./auth/auth";
 import Axios from "axios";
 
 const Profile = () => {
-  const [user, setUser] = useState([]);
   const navigate = useNavigate();
 
   const [fullname, setFullName] = useState("");
@@ -13,14 +12,24 @@ const Profile = () => {
   const [password, setPassword] = useState("");
   const [comfirmPassword, setComfirmPassword] = useState("");
 
+  const [changePassword, setchangePassword] = useState(false);
+
+  // Headers
+  const config = {
+    headers: { "x-auth-token": localStorage.getItem("token") },
+  };
+
   useEffect(() => {
+    //check whether user is logged in or not (if not send back to the login page)
     const user = checkUser();
     if (user) {
       Axios.post("http://localhost:5000/api/user/profile", user, {
         headers: { "x-auth-token": localStorage.getItem("token") },
       })
         .then((res) => {
-          setUser(res.data);
+          setFullName(res.data.fullname);
+          setEmail(res.data.email);
+          setUsername(res.data.username);
         })
         .catch((err) => {
           console.log(err.response.data);
@@ -31,34 +40,137 @@ const Profile = () => {
     }
   }, []);
 
+  const updateUser = (e) => {
+    e.preventDefault();
+
+    //update user details only (expect password)
+    if (!changePassword) {
+      // Request body
+      const body = { fullname, email, username };
+
+      Axios.put("http://localhost:5000/api/user/change-details", body, config)
+        .then((res) => {
+          navigate("/profile");
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err.response.data);
+        });
+    } else {
+      //update password only
+      if (password === comfirmPassword) {
+        // Request body
+        const body = { password };
+
+        Axios.put(
+          "http://localhost:5000/api/user/change-password",
+          body,
+          config
+        )
+          .then((res) => {
+            navigate("/profile");
+            console.log(res);
+          })
+          .catch((err) => {
+            console.log(err.response.data);
+          });
+      }
+    }
+  };
+
   return (
-    <div>
-      <h1>Profile</h1>
-      <form>
-        <input
-          value={user.fullname}
-          onChange={(e) => setFullName(e.target.value)}
-          type="text"
-          placeholder="Full Name"
+    <>
+      <h1 className="text-center m-4">
+        Profile
+        <img
+          alt="logout"
+          src="https://img.icons8.com/external-others-sbts2018/58/000000/external-logout-social-media-others-sbts2018.png"
+          style={{ width: "30px", marginLeft: "10px", cursor: "pointer" }}
+          onClick={() => {
+            localStorage.removeItem("token");
+            navigate("/login");
+          }}
         />
-        <br />
-        <input
-          value={user.email}
-          onChange={(e) => setEmail(e.target.value)}
-          type="email"
-          placeholder="Email"
-        />
-        <br />
-        <input
-          value={user.username}
-          onChange={(e) => setUsername(e.target.value)}
-          type="username"
-          placeholder="Username"
-        />
-        <br />
-        <button type="button">Register</button>
-      </form>
-    </div>
+      </h1>
+
+      <div style={{ margin: "" }} className="d-flex justify-content-center">
+        <form style={{ width: "300px" }}>
+          <div hidden={changePassword}>
+            <div class="form-floating mb-3">
+              <input
+                defaultValue={fullname}
+                onChange={(e) => setFullName(e.target.value)}
+                type="text"
+                className="form-control"
+                id="floatingInput"
+                placeholder="Full Name"
+              />
+              <label for="floatingInput">Full Name</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input
+                defaultValue={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder="Email"
+                className="form-control"
+                id="floatingInput"
+              />
+              <label for="floatingInput">Email</label>
+            </div>
+
+            <div class="form-floating mb-3">
+              <input
+                defaultValue={username}
+                onChange={(e) => setUsername(e.target.value)}
+                type="username"
+                placeholder="Username"
+                className="form-control"
+                id="floatingInput"
+              />
+              <label for="floatingInput">Username</label>
+            </div>
+          </div>
+          <div hidden={!changePassword}>
+            <div class="form-floating mb-3">
+              <input
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder="Password"
+                className="form-control"
+                id="floatingInput"
+              />
+              <label for="floatingInput">Password</label>
+            </div>
+
+            <div class="form-floating mb-3">
+              <input
+                onChange={(e) => setComfirmPassword(e.target.value)}
+                type="password"
+                placeholder="Confirm Password"
+                className="form-control"
+                id="floatingInput"
+              />
+              <label for="floatingInput">Confirm Password</label>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-secondary w-100 mb-2"
+            onClick={() => {
+              setchangePassword(!changePassword);
+            }}
+          >
+            {changePassword ? "Cancel" : "Change Password"}
+          </button>
+
+          <button type="button" class="btn btn-dark w-100" onClick={updateUser}>
+            Update
+          </button>
+        </form>
+      </div>
+    </>
   );
 };
 
